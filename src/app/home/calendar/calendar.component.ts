@@ -185,6 +185,10 @@ export class CalendarComponent implements OnInit {
     this.events = this.events.filter((event) => event !== eventToDelete);
   }
 
+  importEvent(eventToImport: CalendarEvent): void {
+    this.events = [...this.events, eventToImport];
+  }
+
   setView(view: CalendarView) {
     this.view = view;
   }

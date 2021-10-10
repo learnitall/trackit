@@ -10,6 +10,10 @@ const routes: Routes = [
   {
     path: 'home',
     loadChildren: () => import('./home/home.module').then( m => m.HomePageModule)
+  },
+  {
+    path: 'ghlogin',
+    loadChildren: () => import('./ghlogin/ghlogin.module').then( m => m.GhloginPageModule)
   }
 ];
 

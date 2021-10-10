@@ -7,6 +7,7 @@ import { IonicModule } from '@ionic/angular';
 import { CalendarModule, DateAdapter } from 'angular-calendar';
 import { adapterFactory } from 'angular-calendar/date-adapters/date-fns';
 import { CalendarComponent } from './calendar/calendar.component';
+import { DataStoreGHService } from '../services/datastore-gh/datastore-gh.service';
 
 import { HomePageRoutingModule } from './home-routing.module';
 
@@ -26,6 +27,7 @@ import { HomePage } from './home.page';
   entryComponents: [
     CalendarComponent
   ],
-  declarations: [HomePage, CalendarComponent]
+  declarations: [HomePage, CalendarComponent],
+  providers: [DataStoreGHService]
 })
 export class HomePageModule {}
