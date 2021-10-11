@@ -2,8 +2,11 @@ import {
   Component,
   OnInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   ViewChild,
   TemplateRef,
+  Injectable,
+  ViewEncapsulation
 } from '@angular/core';
 import {
   startOfDay,
@@ -14,118 +17,139 @@ import {
   isSameDay,
   isSameMonth,
   addHours,
+  addMinutes,
+  endOfWeek
 } from 'date-fns';
-import { Subject } from 'rxjs';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject, fromEvent } from 'rxjs';
+import { finalize, takeUntil } from 'rxjs/operators';
+import { WeekViewHourSegment } from 'calendar-utils';
 import {
   CalendarEvent,
   CalendarEventAction,
   CalendarEventTimesChangedEvent,
   CalendarView,
+  CalendarEventTitleFormatter
 } from 'angular-calendar';
 
+import { ModalController } from '@ionic/angular';
+import { ModalPage } from './modal/modal.page';
+
+
+function floorToNearest(amount: number, precision: number) {
+  return Math.floor(amount / precision) * precision;
+}
+
+function ceilToNearest(amount: number, precision: number) {
+  return Math.ceil(amount / precision) * precision;
+}
+
+@Injectable()
+export class CustomEventTitleFormatter extends CalendarEventTitleFormatter {
+  weekTooltip(event: CalendarEvent, title: string) {
+    if (!event.meta.tmpEvent) {
+      return super.weekTooltip(event, title);
+    }
+  }
+
+  dayTooltip(event: CalendarEvent, title: string) {
+    if (!event.meta.tmpEvent) {
+      return super.dayTooltip(event, title);
+    }
+  }
+}
+
+/*
 const colors: any = {
-  red: {
-    primary: '#ad2121',
-    secondary: '#FAE3E3',
+  lavender: {
+    primary: '#AA7DCE',
+    secondary: '#AA7DCE',
+    name: 'Lavender'
   },
-  blue: {
-    primary: '#1e90ff',
-    secondary: '#D1E8FF',
+  lpink: {
+    primary: '#F4A5AE',
+    secondayr: '#F4A5AE',
+    name: 'Light Pink'
   },
-  yellow: {
-    primary: '#e3bc08',
-    secondary: '#FDF1BA',
+  crose: {
+    primary: '#A8577E',
+    secondary: '#A8577E',
+    name: 'China Rose'
   },
+  inchworm: {
+    primary: '#C2F970',
+    secondary: '#C2F970',
+    name: 'Inchworm'
+  },
+  pnavy: {
+    primary: '#564D80',
+    secondary: '#564D80',
+    name: 'Purple Navy'
+  },
+  wbyonder: {
+    primary: '#98A6D4',
+    secondary: '#98A6D4',
+    name: 'Wild Blue Yonder'
+  },
+  tgreen: {
+    primary: '#D3FCD5',
+    secondary: '#98A6D4',
+    name: 'Tea Green'
+  }
+
 };
+*/
 
 @Component({
   selector: 'app-calendar',
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.scss'],
+  providers: [
+    {
+      provide: CalendarEventTitleFormatter,
+      useClass: CustomEventTitleFormatter,
+    },
+  ],
+  styles: [
+    `
+      .disable-hover {
+        pointer-events: none;
+      }
+    `,
+  ],
+  encapsulation: ViewEncapsulation.None,
 })
 export class CalendarComponent implements OnInit {
 
-  constructor(private modal: NgbModal) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    public modalController: ModalController
+  ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.doRefresh();
+  }
 
   @ViewChild('modalContent', { static: true }) modalContent: TemplateRef<any>;
 
   view: CalendarView = CalendarView.Month;
-
   CalendarView = CalendarView;
-
   viewDate: Date = new Date();
-
   modalData: {
     action: string;
     event: CalendarEvent;
   };
-
-  actions: CalendarEventAction[] = [
-    {
-      label: '<i class="fas fa-fw fa-pencil-alt"></i>',
-      a11yLabel: 'Edit',
-      onClick: ({ event }: { event: CalendarEvent }): void => {
-        this.handleEvent('Edited', event);
-      },
-    },
-    {
-      label: '<i class="fas fa-fw fa-trash-alt"></i>',
-      a11yLabel: 'Delete',
-      onClick: ({ event }: { event: CalendarEvent }): void => {
-        this.events = this.events.filter((iEvent) => iEvent !== event);
-        this.handleEvent('Deleted', event);
-      },
-    },
-  ];
-
+  weekStartsOn: 0 = 0;
+  actions: CalendarEventAction[] = [];
+  dragToCreateActive = false;
+  activeDayIsOpen: boolean = false;
   refresh: Subject<any> = new Subject();
+  events: CalendarEvent[] = [];
 
-  events: CalendarEvent[] = [
-    {
-      start: subDays(startOfDay(new Date()), 1),
-      end: addDays(new Date(), 1),
-      title: 'A 3 day event',
-      color: colors.red,
-      actions: this.actions,
-      allDay: true,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true,
-      },
-      draggable: true,
-    },
-    {
-      start: startOfDay(new Date()),
-      title: 'An event with no end date',
-      color: colors.yellow,
-      actions: this.actions,
-    },
-    {
-      start: subDays(endOfMonth(new Date()), 3),
-      end: addDays(endOfMonth(new Date()), 3),
-      title: 'A long event that spans 2 months',
-      color: colors.blue,
-      allDay: true,
-    },
-    {
-      start: addHours(startOfDay(new Date()), 2),
-      end: addHours(new Date(), 2),
-      title: 'A draggable and resizable event',
-      color: colors.yellow,
-      actions: this.actions,
-      resizable: {
-        beforeStart: true,
-        afterEnd: true,
-      },
-      draggable: true,
-    },
-  ];
-
-  activeDayIsOpen: boolean = true;
+  private doRefresh() {
+    this.events = [...this.events];
+    this.cdr.detectChanges();
+  }
 
   dayClicked({ date, events }: { date: Date; events: CalendarEvent[] }): void {
     if (isSameMonth(date, this.viewDate)) {
@@ -159,34 +183,46 @@ export class CalendarComponent implements OnInit {
     this.handleEvent('Dropped or resized', event);
   }
 
-  handleEvent(action: string, event: CalendarEvent): void {
-    this.modalData = { event, action };
-    this.modal.open(this.modalContent, { size: 'lg' });
+  async handleClicked(event: CalendarEvent) {
+    const modal = await this.modalController.create({
+      component: ModalPage,
+      componentProps: {
+        "event": event
+      }
+    });
+
+    await modal.present();
   }
 
-  addEvent(): void {
+  handleEvent(action: string, event: CalendarEvent): void {
+    if (action == "Clicked") this.handleClicked(event);
+  }
+
+  getNewEvent(): CalendarEvent {
+    return {
+      id: this.events.length,
+      title: 'New event',
+      start: startOfDay(new Date()),
+      end: endOfDay(new Date()),
+      draggable: true,
+      resizable: {
+        beforeStart: true,
+        afterEnd: true,
+      },
+      actions: this.actions,
+      meta: {}
+    };
+  }
+
+  addEvent(event: CalendarEvent): void {
     this.events = [
       ...this.events,
-      {
-        title: 'New event',
-        start: startOfDay(new Date()),
-        end: endOfDay(new Date()),
-        color: colors.red,
-        draggable: true,
-        resizable: {
-          beforeStart: true,
-          afterEnd: true,
-        },
-      },
+      event
     ];
   }
 
   deleteEvent(eventToDelete: CalendarEvent) {
     this.events = this.events.filter((event) => event !== eventToDelete);
-  }
-
-  importEvent(eventToImport: CalendarEvent): void {
-    this.events = [...this.events, eventToImport];
   }
 
   setView(view: CalendarView) {
@@ -195,6 +231,56 @@ export class CalendarComponent implements OnInit {
 
   closeOpenMonthViewDay() {
     this.activeDayIsOpen = false;
+  }
+
+  startDragToCreate(
+    segment: WeekViewHourSegment,
+    mouseDownEvent: MouseEvent,
+    segmentElement: HTMLElement
+  ) {
+    const dragToSelectEvent: CalendarEvent = this.getNewEvent();
+    if (dragToSelectEvent.meta == null) {
+      dragToSelectEvent.meta = {}
+    }
+    dragToSelectEvent.meta.tmpEvent = true;
+    dragToSelectEvent.start = segment.date;
+    dragToSelectEvent.end = null;
+    this.addEvent(dragToSelectEvent);
+
+    const segmentPosition = segmentElement.getBoundingClientRect();
+    this.dragToCreateActive = true;
+    const endOfView = endOfWeek(this.viewDate, {
+      weekStartsOn: this.weekStartsOn,
+    });
+
+    fromEvent(document, 'mousemove')
+      .pipe(
+        finalize(() => {
+          delete dragToSelectEvent.meta.tmpEvent;
+          this.dragToCreateActive = false;
+          this.doRefresh();
+        }),
+        takeUntil(fromEvent(document, 'mouseup'))
+      )
+      .subscribe((mouseMoveEvent: MouseEvent) => {
+        const minutesDiff = ceilToNearest(
+          mouseMoveEvent.clientY - segmentPosition.top,
+          30
+        );
+
+        const daysDiff =
+          floorToNearest(
+            mouseMoveEvent.clientX - segmentPosition.left,
+            segmentPosition.width
+          ) / segmentPosition.width;
+
+        const newEnd = addDays(addMinutes(segment.date, minutesDiff), daysDiff);
+        if (newEnd > segment.date && newEnd < endOfView) {
+          dragToSelectEvent.end = newEnd;
+        }
+        this.doRefresh();
+      });
+    
   }
 
 }
