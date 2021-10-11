@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
+      - run: 'sudo npm install -g @ionic/cli'
       - run: 'npm run ionic:build --prod'
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
