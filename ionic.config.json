@@ -1,9 +1,0 @@
-{
-  "name": "studyit",
-  "integrations": {
-    "capacitor": {},
-    "cordova": {}
-  },
-  "type": "angular",
-  "id": "54f5afa5"
-}
