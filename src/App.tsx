@@ -1,4 +1,5 @@
-import { Redirect, Route } from 'react-router-dom';
+import React from 'react';
+import {Redirect, Route} from 'react-router-dom';
 import {
   IonApp,
   IonIcon,
@@ -8,10 +9,8 @@ import {
   IonTabButton,
   IonTabs,
 } from '@ionic/react';
-import { IonReactRouter } from '@ionic/react-router';
-import { calendar, trendingUp } from 'ionicons/icons';
-
-import { initializeApp } from "firebase/app";
+import {IonReactRouter} from '@ionic/react-router';
+import {calendar, trendingUp} from 'ionicons/icons';
 
 import PageHeader from './components/PageHeader';
 
@@ -36,18 +35,6 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAZkebUc3jK0VFIjF5ZDzrOc3Q85j24gOg",
-  authDomain: "trackit-606d0.firebaseapp.com",
-  projectId: "trackit-606d0",
-  storageBucket: "trackit-606d0.appspot.com",
-  messagingSenderId: "669528637609",
-  appId: "1:669528637609:web:d0dd1a423c565eb00069b8"
-};
-const firebaseApp = initializeApp(firebaseConfig);
-
 
 const App: React.FC = () => (
   <IonApp>

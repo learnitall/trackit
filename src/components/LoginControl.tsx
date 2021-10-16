@@ -1,62 +1,82 @@
-import { IonButtons, IonButton, IonIcon, IonText } from '@ionic/react';
-import { logoGoogle } from 'ionicons/icons';
-import { Component } from "react";
+import React, {useState} from 'react';
+import {IonButtons, IonButton, IonIcon, IonText} from '@ionic/react';
+import {logoGoogle} from 'ionicons/icons';
 
-
-function LoginButton(props: { onClick: any }) {
-    return (
-      <IonButtons slot="end">
-        <IonButton>
-          <IonIcon style={{"padding-right": "5px"}} size="large" icon={logoGoogle}></IonIcon>
-          <IonText>Login</IonText>
-        </IonButton>
-      </IonButtons>
-    );
+/**
+ * Create the login button
+ * @param {Object} props - Render properties containing button callback
+ * @param {function(): void} props.onClick - Called when login button is pressed
+ * @return {Object} - Ionic ion-buttons tag containing the login button
+ */
+function LoginButton(props: { onClick: () => void }) {
+  return (
+    <IonButtons slot="end">
+      <IonButton>
+        <IonIcon
+          style={{'padding-right': '5px'}}
+          size="large"
+          icon={logoGoogle}
+        ></IonIcon>
+        <IonText>Login</IonText>
+      </IonButton>
+    </IonButtons>
+  );
 }
 
+/**
+ * Create the logout button
+ * @param {Object} props - Render properties containing button callback
+ * @param {function(): void} props.onClick - Called when logout
+ * button is pressed
+ * @return {Object} - Ionic ion-buttons tag containing the logout button
+ */
 function LogoutButton(props: { onClick: any }) {
-    return (
-      <IonButtons slot="end">
-        <IonButton>
-          <IonIcon style={{"padding-right": "5px"}} size="large" icon={logoGoogle}></IonIcon>
-          <IonText>Logout</IonText>
-        </IonButton>
-      </IonButtons>
-    );
+  return (
+    <IonButtons slot="end">
+      <IonButton>
+        <IonIcon
+          style={{'padding-right': '5px'}}
+          size="large"
+          icon={logoGoogle}
+        ></IonIcon>
+        <IonText>Logout</IonText>
+      </IonButton>
+    </IonButtons>
+  );
 }
 
-interface LoginControlState {
-  isLoggedIn: boolean
-}
+/**
+ * Controls login and logout UI elements.
+ * @return {Object} LogoutButton or LoginButton depending on login status
+ */
+const LoginControl: React.FC<{}> = () => {
+  const [loggedIn, setLoggedIn] = useState(false);
 
-// Based on https://reactjs.org/docs/conditional-rendering.html
-class LoginControl extends Component<{}, LoginControlState> {
-    constructor(props: {}) {
-      super(props);
-      this.handleLoginClick = this.handleLoginClick.bind(this);
-      this.handleLogoutClick = this.handleLogoutClick.bind(this);
-      this.state = {isLoggedIn: false};
-    }
-  
-    handleLoginClick() {
-      this.setState({isLoggedIn: true});
-    }
-  
-    handleLogoutClick() {
-      this.setState({isLoggedIn: false});
-    }
-  
-    render() {
-      const isLoggedIn = this.state.isLoggedIn;
-      let button;
-      if (isLoggedIn) {
-        button = <LogoutButton onClick={this.handleLogoutClick} />;
-      } else {
-        button = <LoginButton onClick={this.handleLoginClick} />;
-      }
-  
-      return ( <>{button}</> );
-    }
+  /**
+   * Called when user clicks on the LoginButton
+   * Triggers a Login event
+   */
+  function handleLoginClick() {
+    setLoggedIn(true);
   }
 
-  export default LoginControl;
+  /**
+   * Called when the user clicks on the LogoutButton
+   * Triggers a Logout event
+   */
+  function handleLogoutClick() {
+    setLoggedIn(false);
+  }
+
+  if (loggedIn) {
+    return (
+      <LogoutButton onClick={handleLogoutClick}/>
+    );
+  } else {
+    return (
+      <LoginButton onClick={handleLoginClick}/>
+    );
+  }
+};
+
+export default LoginControl;

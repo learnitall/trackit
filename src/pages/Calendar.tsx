@@ -1,6 +1,13 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
+import React from 'react';
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+} from '@ionic/react';
 import ExploreContainer from '../components/ExploreContainer';
-import Calendar from '@ericz1803/react-google-calendar';
+// import Calendar from '@ericz1803/react-google-calendar';
 import './Calendar.css';
 
 const CalendarPage: React.FC = () => {
