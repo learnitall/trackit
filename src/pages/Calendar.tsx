@@ -1,22 +1,21 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
 import ExploreContainer from '../components/ExploreContainer';
-import HeaderContainer from '../components/HeaderContainer';
-import './Tab3.css';
+import Calendar from '@ericz1803/react-google-calendar';
+import './Calendar.css';
 
-const Tab3: React.FC = () => {
+const CalendarPage: React.FC = () => {
   return (
     <IonPage>
-      <HeaderContainer/>
       <IonContent fullscreen>
         <IonHeader collapse="condense">
           <IonToolbar>
-            <IonTitle size="large">Tab 3</IonTitle>
+            <IonTitle size="large">Calendar</IonTitle>
           </IonToolbar>
         </IonHeader>
-        <ExploreContainer name="Tab 3 page" />
+        <ExploreContainer name="Tab 1 page" />
       </IonContent>
     </IonPage>
   );
 };
 
-export default Tab3;
+export default CalendarPage;

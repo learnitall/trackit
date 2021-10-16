@@ -9,10 +9,14 @@ import {
   IonTabs,
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { ellipse, square, triangle } from 'ionicons/icons';
-import Tab1 from './pages/Tab1';
-import Tab2 from './pages/Tab2';
-import Tab3 from './pages/Tab3';
+import { calendar, trendingUp } from 'ionicons/icons';
+
+import { initializeApp } from "firebase/app";
+
+import PageHeader from './components/PageHeader';
+
+import CalendarPage from './pages/Calendar';
+import Insights from './pages/Insights';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -33,36 +37,42 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAZkebUc3jK0VFIjF5ZDzrOc3Q85j24gOg",
+  authDomain: "trackit-606d0.firebaseapp.com",
+  projectId: "trackit-606d0",
+  storageBucket: "trackit-606d0.appspot.com",
+  messagingSenderId: "669528637609",
+  appId: "1:669528637609:web:d0dd1a423c565eb00069b8"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+
+
 const App: React.FC = () => (
   <IonApp>
+    <PageHeader />
     <IonReactRouter>
       <IonTabs>
         <IonRouterOutlet>
-          <Route exact path="/tab1">
-            <Tab1 />
+          <Route exact path="/calendar">
+            <CalendarPage />
           </Route>
-          <Route exact path="/tab2">
-            <Tab2 />
-          </Route>
-          <Route path="/tab3">
-            <Tab3 />
+          <Route exact path="/insights">
+            <Insights />
           </Route>
           <Route exact path="/">
-            <Redirect to="/tab1" />
+            <Redirect to="/calendar" />
           </Route>
         </IonRouterOutlet>
         <IonTabBar slot="bottom">
-          <IonTabButton tab="tab1" href="/tab1">
-            <IonIcon icon={triangle} />
-            <IonLabel>Tab 1</IonLabel>
+          <IonTabButton tab="calendar" href="/calendar">
+            <IonIcon icon={calendar} />
+            <IonLabel>Calendar</IonLabel>
           </IonTabButton>
-          <IonTabButton tab="tab2" href="/tab2">
-            <IonIcon icon={ellipse} />
-            <IonLabel>Tab 2</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="tab3" href="/tab3">
-            <IonIcon icon={square} />
-            <IonLabel>Tab 3</IonLabel>
+          <IonTabButton tab="insights" href="/insights">
+            <IonIcon icon={trendingUp} />
+            <IonLabel>Insights</IonLabel>
           </IonTabButton>
         </IonTabBar>
       </IonTabs>
