@@ -15,13 +15,15 @@ const store = new Storage();
   }
 )();
 
+// Note: this configuration is not sensitive
+// https://firebase.google.com/docs/web/learn-more?authuser=1#config-object
 const firebaseConfig = {
-  apiKey: "AIzaSyDVZ6RAygylASPH9mR1yfs08zvpmUHQVCU",
-  authDomain: "trackitforme-fdffa.firebaseapp.com",
-  projectId: "trackitforme-fdffa",
-  storageBucket: "trackitforme-fdffa.appspot.com",
-  messagingSenderId: "506233661691",
-  appId: "1:506233661691:web:09a037b16c3a7f2444e85e"
+  apiKey: 'AIzaSyDVZ6RAygylASPH9mR1yfs08zvpmUHQVCU',
+  authDomain: 'trackitforme-fdffa.firebaseapp.com',
+  projectId: 'trackitforme-fdffa',
+  storageBucket: 'trackitforme-fdffa.appspot.com',
+  messagingSenderId: '506233661691',
+  appId: '1:506233661691:web:09a037b16c3a7f2444e85e',
 };
 // eslint-disable-next-line no-unused-vars
 const firebaseApp = initializeApp(firebaseConfig);
@@ -30,7 +32,7 @@ const auth = getAuth();
 auth.useDeviceLanguage();
 const provider = new GoogleAuthProvider();
 provider.addScope('https://www.googleapis.com/auth/calendar.readonly');
-provider.addScope('https://www.googleapis.com/auth/calendar.events');
+provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
 
 // Based on https://www.freecodecamp.org/news/state-management-with-react-hooks/
 // and https://elisealcala.com/context-use-reducer-typescript/
