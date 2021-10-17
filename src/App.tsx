@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect} from 'react';
 import {Redirect, Route} from 'react-router-dom';
 import {
   IonApp,
@@ -11,6 +11,13 @@ import {
 } from '@ionic/react';
 import {IonReactRouter} from '@ionic/react-router';
 import {calendar, trendingUp} from 'ionicons/icons';
+
+import {
+  AuthContext,
+  loginReducer,
+  initialLoginState,
+  loadLogin,
+} from './services/login';
 
 import PageHeader from './components/PageHeader';
 
@@ -36,35 +43,54 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
-const App: React.FC = () => (
-  <IonApp>
-    <PageHeader />
-    <IonReactRouter>
-      <IonTabs>
-        <IonRouterOutlet>
-          <Route exact path="/calendar">
-            <CalendarPage />
-          </Route>
-          <Route exact path="/insights">
-            <Insights />
-          </Route>
-          <Route exact path="/">
-            <Redirect to="/calendar" />
-          </Route>
-        </IonRouterOutlet>
-        <IonTabBar slot="bottom">
-          <IonTabButton tab="calendar" href="/calendar">
-            <IonIcon icon={calendar} />
-            <IonLabel>Calendar</IonLabel>
-          </IonTabButton>
-          <IonTabButton tab="insights" href="/insights">
-            <IonIcon icon={trendingUp} />
-            <IonLabel>Insights</IonLabel>
-          </IonTabButton>
-        </IonTabBar>
-      </IonTabs>
-    </IonReactRouter>
-  </IonApp>
-);
+let _initialized: boolean = false;
+
+const App: React.FC = () => {
+  const [loginState, loginDispatch] = React.useReducer(
+      loginReducer,
+      initialLoginState,
+  );
+  useEffect(() => {
+    if (!_initialized) {
+      loadLogin(loginDispatch);
+      _initialized = true;
+    }
+  });
+
+  return (
+    <IonApp>
+      <AuthContext.Provider
+        value={{state: loginState, dispatch: loginDispatch}}
+      >
+        <PageHeader />
+        <IonReactRouter>
+          <IonTabs>
+            <IonRouterOutlet>
+              <Route exact path="/calendar">
+                <CalendarPage />
+              </Route>
+              <Route exact path="/insights">
+                <Insights />
+              </Route>
+              <Route exact path="/">
+                <Redirect to="/calendar" />
+              </Route>
+            </IonRouterOutlet>
+            <IonTabBar slot="bottom">
+              <IonTabButton tab="calendar" href="/calendar">
+                <IonIcon icon={calendar} />
+                <IonLabel>Calendar</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="insights" href="/insights">
+                <IonIcon icon={trendingUp} />
+                <IonLabel>Insights</IonLabel>
+              </IonTabButton>
+            </IonTabBar>
+          </IonTabs>
+        </IonReactRouter>
+      </AuthContext.Provider>
+    </IonApp>
+  );
+};
 
 export default App;

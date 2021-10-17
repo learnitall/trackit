@@ -1,6 +1,11 @@
-import React, {useState} from 'react';
+import React, {useContext} from 'react';
 import {IonButtons, IonButton, IonIcon, IonText} from '@ionic/react';
 import {logoGoogle} from 'ionicons/icons';
+import {
+  AuthContext,
+  doLogin,
+  doLogout,
+} from '../services/login';
 
 /**
  * Create the login button
@@ -11,9 +16,9 @@ import {logoGoogle} from 'ionicons/icons';
 function LoginButton(props: { onClick: () => void }) {
   return (
     <IonButtons slot="end">
-      <IonButton>
+      <IonButton onClick={props.onClick}>
         <IonIcon
-          style={{'padding-right': '5px'}}
+          style={{'paddingRight': '5px'}}
           size="large"
           icon={logoGoogle}
         ></IonIcon>
@@ -33,9 +38,9 @@ function LoginButton(props: { onClick: () => void }) {
 function LogoutButton(props: { onClick: any }) {
   return (
     <IonButtons slot="end">
-      <IonButton>
+      <IonButton onClick={props.onClick}>
         <IonIcon
-          style={{'padding-right': '5px'}}
+          style={{'paddingRight': '5px'}}
           size="large"
           icon={logoGoogle}
         ></IonIcon>
@@ -50,14 +55,13 @@ function LogoutButton(props: { onClick: any }) {
  * @return {Object} LogoutButton or LoginButton depending on login status
  */
 const LoginControl: React.FC<{}> = () => {
-  const [loggedIn, setLoggedIn] = useState(false);
-
+  const {dispatch} = useContext(AuthContext);
   /**
    * Called when user clicks on the LoginButton
    * Triggers a Login event
    */
   function handleLoginClick() {
-    setLoggedIn(true);
+    doLogin(dispatch);
   }
 
   /**
@@ -65,18 +69,18 @@ const LoginControl: React.FC<{}> = () => {
    * Triggers a Logout event
    */
   function handleLogoutClick() {
-    setLoggedIn(false);
+    doLogout(dispatch);
   }
 
-  if (loggedIn) {
-    return (
-      <LogoutButton onClick={handleLogoutClick}/>
-    );
-  } else {
-    return (
-      <LoginButton onClick={handleLoginClick}/>
-    );
-  }
+  return (
+    <AuthContext.Consumer>
+      {(value) => (
+        !value.state.isAuthenticated ?
+        <LoginButton onClick={handleLoginClick}/> :
+        <LogoutButton onClick={handleLogoutClick}/>
+      )}
+    </AuthContext.Consumer>
+  );
 };
 
 export default LoginControl;
