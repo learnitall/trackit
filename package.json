@@ -76,7 +76,8 @@
     "@typescript-eslint/parser": "^4.33.0",
     "eslint": "^7.32.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-plugin-react": "^7.26.1"
+    "eslint-plugin-react": "^7.26.1",
+    "firebase-tools": "^9.20.0"
   },
   "description": "An Ionic project"
 }
