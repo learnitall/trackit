@@ -19,7 +19,7 @@ const store = new Storage();
 // https://firebase.google.com/docs/web/learn-more?authuser=1#config-object
 const firebaseConfig = {
   apiKey: 'AIzaSyDVZ6RAygylASPH9mR1yfs08zvpmUHQVCU',
-  authDomain: 'trackitforme-fdffa.firebaseapp.com',
+  authDomain: 'trackitfor.me',
   projectId: 'trackitforme-fdffa',
   storageBucket: 'trackitforme-fdffa.appspot.com',
   messagingSenderId: '506233661691',
