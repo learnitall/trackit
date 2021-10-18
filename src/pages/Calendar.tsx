@@ -1,27 +1,21 @@
 import React from 'react';
 import {
   IonContent,
-  IonHeader,
   IonPage,
-  IonTitle,
-  IonToolbar,
   IonText,
 } from '@ionic/react';
 import {
   AuthContext,
 } from '../services/login';
+import PageHeader from '../components/PageHeader';
 // import Calendar from '@ericz1803/react-google-calendar';
 import './Calendar.css';
 
 const CalendarPage: React.FC = () => {
   return (
     <IonPage>
+      <PageHeader />
       <IonContent fullscreen>
-        <IonHeader collapse="condense">
-          <IonToolbar>
-            <IonTitle size="large">Calendar</IonTitle>
-          </IonToolbar>
-        </IonHeader>
         <div className="container">
           <AuthContext.Consumer>
             {(value) =>

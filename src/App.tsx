@@ -10,7 +10,7 @@ import {
   IonTabs,
 } from '@ionic/react';
 import {IonReactRouter} from '@ionic/react-router';
-import {calendar, trendingUp} from 'ionicons/icons';
+import {help, calendar, trendingUp} from 'ionicons/icons';
 
 import {
   AuthContext,
@@ -19,10 +19,9 @@ import {
   loadLogin,
 } from './services/login';
 
-import PageHeader from './components/PageHeader';
-
 import CalendarPage from './pages/Calendar';
 import Insights from './pages/Insights';
+import AboutPage from './pages/About';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -62,7 +61,6 @@ const App: React.FC = () => {
       <AuthContext.Provider
         value={{state: loginState, dispatch: loginDispatch}}
       >
-        <PageHeader />
         <IonReactRouter>
           <IonTabs>
             <IonRouterOutlet>
@@ -71,6 +69,9 @@ const App: React.FC = () => {
               </Route>
               <Route exact path="/insights">
                 <Insights />
+              </Route>
+              <Route exact path="/about">
+                <AboutPage />
               </Route>
               <Route exact path="/">
                 <Redirect to="/calendar" />
@@ -84,6 +85,10 @@ const App: React.FC = () => {
               <IonTabButton tab="insights" href="/insights">
                 <IonIcon icon={trendingUp} />
                 <IonLabel>Insights</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="about" href="/about">
+                <IonIcon icon={help} />
+                <IonLabel>About</IonLabel>
               </IonTabButton>
             </IonTabBar>
           </IonTabs>
