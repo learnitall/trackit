@@ -15,4 +15,4 @@ jobs:
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
           firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_TRACKITFORME_FDFFA }}'
-          projectId: trackit-606d0
+          projectId: trackitforme-fdffa
