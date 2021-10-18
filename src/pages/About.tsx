@@ -92,8 +92,7 @@ const AboutPage: React.FC<{}> = () => {
               information regarding a user&apos;s calendar event data, however
               mistakes happen. Should a user wish for additional features,
               finds a mistake in the data presented, or finds a bug with
-              the website, please reach out to
-              <a
+              the website, please reach out to <a
                 href="mailto:learnitall0@gmail.com"
               >learnitall0@gmail.com</a>.
             </p>
