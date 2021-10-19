@@ -7,6 +7,7 @@ import {
   GoogleAuthProvider,
   signOut,
 } from 'firebase/auth';
+import {firebaseConfig} from './fireconfig';
 
 const store = new Storage();
 (
@@ -15,16 +16,6 @@ const store = new Storage();
   }
 )();
 
-// Note: this configuration is not sensitive
-// https://firebase.google.com/docs/web/learn-more?authuser=1#config-object
-const firebaseConfig = {
-  apiKey: 'AIzaSyDVZ6RAygylASPH9mR1yfs08zvpmUHQVCU',
-  authDomain: 'trackitfor.me',
-  projectId: 'trackitforme-fdffa',
-  storageBucket: 'trackitforme-fdffa.appspot.com',
-  messagingSenderId: '506233661691',
-  appId: '1:506233661691:web:09a037b16c3a7f2444e85e',
-};
 // eslint-disable-next-line no-unused-vars
 const firebaseApp = initializeApp(firebaseConfig);
 
