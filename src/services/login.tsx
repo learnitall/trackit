@@ -90,6 +90,7 @@ export const loginReducer = (state: LoginState, action: LoginAction) => {
   if (loginState == null) {
     console.log('Got logout request, clearing storage');
     store.clear();
+    return initialLoginState;
   } else {
     console.log('Saving the following loginState:');
     console.log(loginState);
