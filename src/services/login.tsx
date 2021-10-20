@@ -58,7 +58,7 @@ export const AuthContext = createContext<{
   dispatch: () => null,
 });
 export const loginReducer = (state: LoginState, action: LoginAction) => {
-  let loginState: LoginState;
+  let loginState: LoginState | null;
   switch (action.type) {
     case 'LOGIN':
       loginState = {
@@ -71,13 +71,7 @@ export const loginReducer = (state: LoginState, action: LoginAction) => {
       console.log(`Logged in as ${action.payload.user} through dispatch`);
       break;
     case 'LOGOUT':
-      loginState = {
-        ...state,
-        isAuthenticated: false,
-        user: null,
-        token: null,
-        error: null,
-      };
+      loginState = null;
       console.log('Logged out through dispatch');
       break;
     case 'ERROR':
@@ -93,10 +87,15 @@ export const loginReducer = (state: LoginState, action: LoginAction) => {
   }
   // When setting these levels to debug, these messages will
   // show up twice... not sure why.
-  console.log('Saving the following loginState:');
-  console.log(loginState);
-  store.set('loginState', loginState);
-  return loginState;
+  if (loginState == null) {
+    console.log('Got logout request, clearing storage');
+    store.clear();
+  } else {
+    console.log('Saving the following loginState:');
+    console.log(loginState);
+    store.set('loginState', loginState);
+    return loginState;
+  }
 };
 
 /**
