@@ -6,8 +6,10 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
   signOut,
+  OAuthCredential,
 } from 'firebase/auth';
 import {firebaseConfig} from './fireconfig';
+
 
 const store = new Storage();
 (
@@ -19,6 +21,8 @@ const store = new Storage();
 // eslint-disable-next-line no-unused-vars
 const firebaseApp = initializeApp(firebaseConfig);
 
+// Use firebase for oauth then gapi with helmet
+// https://firebase.google.com/docs/auth/web/google-signin
 const auth = getAuth();
 auth.useDeviceLanguage();
 const provider = new GoogleAuthProvider();
@@ -27,28 +31,73 @@ provider.addScope('https://www.googleapis.com/auth/calendar.events.readonly');
 
 // Based on https://www.freecodecamp.org/news/state-management-with-react-hooks/
 // and https://elisealcala.com/context-use-reducer-typescript/
-interface LoginState {
+export interface LoginState {
   isAuthenticated: boolean,
   user: string | null,
-  token: string | null,
+  credential: OAuthCredential | null,
+  refreshToken: string | null,
   error: string | null,
 };
 export const initialLoginState: LoginState = {
   isAuthenticated: false,
   user: null,
-  token: null,
+  credential: null,
+  refreshToken: null,
   error: null,
 };
 interface LoginPayload {
   user: string | null,
-  token: string | null,
+  credential: OAuthCredential | null,
+  refreshToken: string | null
   error: string | null,
+};
+
+const nullLoginPayload: LoginPayload = {
+  user: null,
+  credential: null,
+  refreshToken: null,
+  error: null,
 };
 interface LoginAction {
   type: string,
   payload: LoginPayload
 };
 
+type DispatchListener = (
+  (loginState: LoginState, actionType: string) => void
+);
+
+
+/**
+ * Save or clear login state using local storage
+ * @param {LoginState} loginState - loginState to pull credential from
+ * @param {string} actionType - type of action received in dispatch
+ */
+function localStorageListener(loginState: LoginState, actionType: string) {
+  if (actionType == 'LOGOUT') {
+    console.log('Got logout request, clearing local storage');
+    store.clear();
+  } else {
+    console.log('Saving the following loginState:');
+    console.log(loginState);
+    store.set('loginState', loginState);
+  }
+}
+
+const dispatchListeners: DispatchListener[] = [
+  localStorageListener,
+];
+
+/**
+ * Invoke each dispatchListener function with given loginState
+ * @param {LoginState} loginState - loginState to give to listeners
+ * @param {string} actionType - type of action dispatch is handling
+ */
+function handleListeners(loginState: LoginState, actionType: string) {
+  dispatchListeners.forEach((dispatchListener: DispatchListener) => {
+    dispatchListener(loginState, actionType);
+  });
+}
 
 export const AuthContext = createContext<{
   state: LoginState;
@@ -65,13 +114,13 @@ export const loginReducer = (state: LoginState, action: LoginAction) => {
         ...state,
         isAuthenticated: true,
         user: action.payload.user,
-        token: action.payload.token,
+        credential: action.payload.credential,
         error: null,
       };
       console.log(`Logged in as ${action.payload.user} through dispatch`);
       break;
     case 'LOGOUT':
-      loginState = null;
+      loginState = initialLoginState;
       console.log('Logged out through dispatch');
       break;
     case 'ERROR':
@@ -85,22 +134,12 @@ export const loginReducer = (state: LoginState, action: LoginAction) => {
       console.warn(`Got unknown event type: ${action.type}`);
       loginState = state;
   }
-  // When setting these levels to debug, these messages will
-  // show up twice... not sure why.
-  if (loginState == null) {
-    console.log('Got logout request, clearing storage');
-    store.clear();
-    return initialLoginState;
-  } else {
-    console.log('Saving the following loginState:');
-    console.log(loginState);
-    store.set('loginState', loginState);
-    return loginState;
-  }
+  handleListeners(loginState, action.type);
+  return loginState;
 };
 
 /**
- * Initialize loginState by loading fro local storage
+ * Initialize loginState by loading from local storage
  * @param {Object} dispatch - React dispatcher to send result to
  */
 export async function loadLogin(dispatch: React.Dispatch<LoginAction>) {
@@ -111,13 +150,17 @@ export async function loadLogin(dispatch: React.Dispatch<LoginAction>) {
     const loadedLoginState: LoginState = await store.get('loginState');
     console.debug(`Loaded the following login state:`);
     console.debug(loadedLoginState);
-    if (loadedLoginState.user !== null && loadedLoginState.token !== null) {
+    if (
+      loadedLoginState.user !== null &&
+      loadedLoginState.credential !== null
+    ) {
       dispatch({
         type: 'LOGIN',
         payload: {
+          ...nullLoginPayload,
           user: loadedLoginState.user,
-          token: loadedLoginState.token,
-          error: null,
+          credential: loadedLoginState.credential,
+          refreshToken: loadedLoginState.refreshToken,
         },
       });
       return;
@@ -127,9 +170,7 @@ export async function loadLogin(dispatch: React.Dispatch<LoginAction>) {
   dispatch({
     type: 'LOGOUT',
     payload: {
-      user: null,
-      token: null,
-      error: null,
+      ...nullLoginPayload,
     },
   });
 }
@@ -143,31 +184,25 @@ export function doLogin(dispatch: React.Dispatch<LoginAction>) {
       .then((result) => {
         let errorMsg;
         const credential = GoogleAuthProvider.credentialFromResult(result);
-        if (credential != null) {
-          const token = credential.accessToken;
-          const user = result.user;
-          const userEmail = user.email;
-          if (token != undefined && userEmail != null) {
-            dispatch({
-              type: 'LOGIN',
-              payload: {
-                user: userEmail,
-                token: token,
-                error: null,
-              },
-            });
-            return;
-          } else {
-            errorMsg = 'Could not get user email or token';
-          }
+        if (credential != null || result.user.email != null) {
+          dispatch({
+            type: 'LOGIN',
+            payload: {
+              ...nullLoginPayload,
+              user: result.user.email,
+              credential: credential,
+              // for some reason this isn't in the credential...
+              refreshToken: result.user.refreshToken,
+            },
+          });
+          return;
         } else {
-          errorMsg = 'Could not get credential';
+          errorMsg = 'Could not get credential or user email';
         }
         dispatch({
           type: 'ERROR',
           payload: {
-            user: null,
-            token: null,
+            ...nullLoginPayload,
             error: errorMsg,
           },
         });
@@ -178,8 +213,8 @@ export function doLogin(dispatch: React.Dispatch<LoginAction>) {
         dispatch({
           type: 'ERROR',
           payload: {
+            ...nullLoginPayload,
             user: email,
-            token: null,
             error: `${errorMessage} (${errorCode})`,
           },
         });
@@ -195,17 +230,14 @@ export function doLogout(dispatch: React.Dispatch<LoginAction>) {
     dispatch({
       type: 'LOGOUT',
       payload: {
-        user: null,
-        token: null,
-        error: null,
+        ...nullLoginPayload,
       },
     });
   }).catch((error) => {
     dispatch({
       type: 'LOGOUT',
       payload: {
-        user: null,
-        token: null,
+        ...nullLoginPayload,
         error: `${error.message} (${error.code})`,
       },
     });
