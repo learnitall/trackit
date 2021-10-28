@@ -4,8 +4,9 @@ import {
   CalendarApiContext,
   gapiSetup,
   setgapiToken,
-  getListCalendarNames,
+  getCalendarList,
   clearCalendarApiState,
+  getCalendarEvents,
 } from '../services/calendarapi';
 import {AuthContext} from '../services/login';
 
@@ -32,11 +33,26 @@ const GapiContainer: React.FC<{}> = () => {
   }, []);
 
   useEffect(() => {
-    if (calendarState.loadState.ready && !calendarState.cache.pulledNames) {
-      getListCalendarNames(
-          calendarDispatch,
-          calendarState,
-      );
+    if (
+      authState.isAuthenticated &&
+      calendarState.loadState.ready
+    ) {
+      if (!calendarState.cache.pulledNames) {
+        getCalendarList(
+            calendarDispatch,
+            calendarState,
+        );
+      }
+      if (
+        calendarState.currentCalendarId != undefined &&
+        calendarState.cache.events[calendarState.currentCalendarId] == undefined
+      ) {
+        getCalendarEvents(
+            calendarState.currentCalendarId,
+            calendarDispatch,
+            calendarState,
+        );
+      }
     }
 
     if (

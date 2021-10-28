@@ -18,36 +18,54 @@ const initialCalendarApiLoadState: CalendarApiLoadState = {
   loaded: false,
   ready: false,
 };
+export interface CalendarEvent {
+  end: string,
+  start: string,
+  title: string,
+  allDay: boolean,
+};
 interface CalendarApiCache {
   names: string[],
-  pulledNames: boolean,
+  ids: string[], // have the same order as 'names'
+  pulledNames: boolean, // implies ids are populated as well
+  events: Record<string, CalendarEvent[]>,
 };
 const initialCalendarApiCache: CalendarApiCache = {
   names: [],
+  ids: [],
   pulledNames: false,
+  events: {},
 };
 export interface CalendarApiState {
   loadState: CalendarApiLoadState,
   cache: CalendarApiCache,
   token: string | undefined,
+  currentCalendarId: string | undefined,
+  currentCalendarName: string | undefined,
 };
 export const initialCalendarApiState: CalendarApiState = {
   loadState: initialCalendarApiLoadState,
   cache: initialCalendarApiCache,
   token: undefined,
+  currentCalendarId: undefined,
+  currentCalendarName: undefined,
 };
 
 interface CalendarApiActionPayload {
   loadState: CalendarApiLoadState | null,
   token: string | undefined,
   cache: CalendarApiCache | null,
+  currentCalendarId: string | undefined,
+  currentCalendarName: string | undefined,
 };
 const nullCalendarApiActionPayload: CalendarApiActionPayload = {
   loadState: null,
   token: undefined,
   cache: null,
+  currentCalendarId: undefined,
+  currentCalendarName: undefined,
 };
-interface CalendarApiAction {
+export interface CalendarApiAction {
   type: string,
   payload: CalendarApiActionPayload
 };
@@ -64,6 +82,16 @@ export const calendarReducer = (
 ) => {
   let calendarApiState: CalendarApiState | null;
   switch (action.type) {
+    case 'SETCAL':
+      console.log('Got setcal action for calendar');
+      console.log('Setting calendar to:');
+      console.log(action.payload.currentCalendarId);
+      calendarApiState = {
+        ...state,
+        currentCalendarId: action.payload.currentCalendarId,
+        currentCalendarName: action.payload.currentCalendarName,
+      };
+      break;
     case 'TOKEN':
       console.log('Got token action for calendar');
       calendarApiState = {
@@ -104,6 +132,7 @@ export const calendarReducer = (
         cache: {
           ...state.cache,
           ...action.payload.cache,
+
         },
       };
       break;
@@ -244,13 +273,13 @@ export function clearCalendarApiState(
 }
 
 /**
- * Get a list of the names of the user's calendar
+ * Get a list of the names and ids of the user's calendar
  * Uses the following endpoint:
  * https://developers.google.com/calendar/api/v3/reference/calendarList/list
  * @param {Object} dispatch - Dispatch to send results to
  * @param {CalendarApiState} state - State of Calendar API
  */
-export async function getListCalendarNames(
+export async function getCalendarList(
     dispatch: React.Dispatch<CalendarApiAction>,
     state: CalendarApiState,
 ) {
@@ -268,8 +297,12 @@ export async function getListCalendarNames(
         console.log('Got response from gapi:');
         console.log(response);
         const calendarNames: string[] = [];
+        const calendarIds: string[] = [];
         response.result.items.forEach(
-            (item: {summary: string}) => calendarNames.push(item.summary),
+            (item: {summary: string, id: string}) => {
+              calendarNames.push(item.summary);
+              calendarIds.push(item.id);
+            },
         );
         dispatch({
           type: 'CACHE',
@@ -278,7 +311,115 @@ export async function getListCalendarNames(
             cache: {
               ...initialCalendarApiCache,
               names: calendarNames,
+              ids: calendarIds,
               pulledNames: true,
+            },
+          },
+        });
+      },
+      (rejected) => {
+        console.log('Got reject from gapi:');
+        console.log(rejected);
+      },
+  );
+}
+
+/**
+ * Sets the currently selected calendar to the given id
+ * @param {string} calendarId - id of currently selected calendar to change to
+ * @param {CalendarApiState} state - state of calendar api
+ * @param {Object} dispatch - Dispatch to send results to
+ */
+export async function setCurrentCalendar(
+    calendarId: string,
+    state: CalendarApiState,
+    dispatch: React.Dispatch<CalendarApiAction>,
+) {
+  dispatch({
+    type: 'SETCAL',
+    payload: {
+      ...nullCalendarApiActionPayload,
+      currentCalendarId: calendarId,
+      currentCalendarName: state.cache.names[
+          state.cache.ids.indexOf(calendarId)
+      ],
+    },
+  });
+}
+
+/**
+ * Get list of events for the given calendar, storing in local cache
+ * @param {string} calendarId - ID of google calendar to pull events from
+ * @param {Object} dispatch - Dispatch to send results to
+ * @param {CalendarApiState} state - State of Calendar API
+ */
+export async function getCalendarEvents(
+    calendarId: string,
+    dispatch: React.Dispatch<CalendarApiAction>,
+    state: CalendarApiState,
+) {
+  if (!state.loadState.ready) {
+    console.warn(
+        `Got request for getting calendar events for ${calendarId}
+        names, but gapi is not ready`,
+    );
+    return;
+  }
+  gapi.client.request({
+    path: `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
+    method: 'GET',
+    params: {
+      singleEvents: 'true',
+    },
+  }).then(
+      (response) => {
+        console.log('Got response from gapi');
+        console.log(response);
+        // const nextPageToken: string | undefined =
+        // response.result.nextPageToken;
+        if (state.cache.events[calendarId] == undefined) {
+          state.cache.events[calendarId] = [];
+        }
+        response.result.items.forEach(
+            (item: {
+              summary: string,
+              end: {
+                dateTime: string,
+                date: string,
+              },
+              start: {
+                dateTime: string,
+                date: string,
+              },
+              colorId: string,
+
+            }) => {
+              let allDay: boolean = true;
+              let end: string = item.end.dateTime;
+              let start: string = item.start.dateTime;
+              if (
+                item.end.dateTime == undefined ||
+                item.end.dateTime == undefined
+              ) {
+                allDay = true;
+                end = item.end.date;
+                start = item.start.date;
+              }
+              state.cache.events[calendarId].push({
+                title: item.summary,
+                end: end,
+                start: start,
+                allDay: allDay,
+              });
+            },
+        );
+        dispatch({
+          type: 'CACHE',
+          payload: {
+            ...nullCalendarApiActionPayload,
+            cache: {
+              ...state.cache,
+              events: state.cache.events,
             },
           },
         });
