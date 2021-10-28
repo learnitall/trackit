@@ -137,7 +137,7 @@ export const calendarReducer = (
       };
       break;
     default:
-      console.warn(`Got unknown even type: ${action.type}`);
+      console.warn(`Got unknown event type: ${action.type}`);
       calendarApiState = state;
   }
   console.log('Setting new calendar api state:');
@@ -368,9 +368,6 @@ export async function getCalendarEvents(
   gapi.client.request({
     path: `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
     method: 'GET',
-    params: {
-      singleEvents: 'true',
-    },
   }).then(
       (response) => {
         console.log('Got response from gapi');
@@ -394,7 +391,7 @@ export async function getCalendarEvents(
               colorId: string,
 
             }) => {
-              let allDay: boolean = true;
+              let allDay: boolean = false;
               let end: string = item.end.dateTime;
               let start: string = item.start.dateTime;
               if (
