@@ -2,8 +2,13 @@ import React, {createContext} from 'react';
 // Helpful docs:
 // https://github.com/google/google-api-javascript-client
 // https://github.com/google/google-api-javascript-client/blob/master/docs/reference.md
+// https://github.com/google/google-api-javascript-client/blob/master/samples/authSample.html
 
 const LOAD_TIMEOUT = 5000; // 5 seconds
+// eslint-disable-next-line max-len
+const CLIENT_ID = '506233661691-7fngm8v1ti1vsu26dlvk8e4ekrt3s1rd.apps.googleusercontent.com';
+const SCOPES = 'profile https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/calendar.events.readonly';
+
 interface CalendarApiLoadState {
   auth: boolean,
   errored: boolean,
@@ -39,29 +44,29 @@ const initialCalendarApiCache: CalendarApiCache = {
 export interface CalendarApiState {
   loadState: CalendarApiLoadState,
   cache: CalendarApiCache,
-  token: string | undefined,
+  currentUser: string | undefined,
   currentCalendarId: string | undefined,
   currentCalendarName: string | undefined,
 };
 export const initialCalendarApiState: CalendarApiState = {
   loadState: initialCalendarApiLoadState,
   cache: initialCalendarApiCache,
-  token: undefined,
+  currentUser: undefined,
   currentCalendarId: undefined,
   currentCalendarName: undefined,
 };
 
 interface CalendarApiActionPayload {
   loadState: CalendarApiLoadState | null,
-  token: string | undefined,
   cache: CalendarApiCache | null,
+  currentUser: string | undefined,
   currentCalendarId: string | undefined,
   currentCalendarName: string | undefined,
 };
 const nullCalendarApiActionPayload: CalendarApiActionPayload = {
   loadState: null,
-  token: undefined,
   cache: null,
+  currentUser: undefined,
   currentCalendarId: undefined,
   currentCalendarName: undefined,
 };
@@ -92,21 +97,11 @@ export const calendarReducer = (
         currentCalendarName: action.payload.currentCalendarName,
       };
       break;
-    case 'TOKEN':
-      console.log('Got token action for calendar');
-      calendarApiState = {
-        ...state,
-        token: action.payload.token,
-        loadState: {
-          ...state.loadState,
-          ...action.payload.loadState,
-        },
-      };
-      break;
     case 'LOAD':
       console.log('Got load action for calendar');
       calendarApiState = {
         ...state,
+        currentUser: action.payload.currentUser,
         loadState: {
           ...state.loadState,
           ...action.payload.loadState,
@@ -116,8 +111,9 @@ export const calendarReducer = (
     case 'CLEAR':
       console.log('Got clear action for calendar');
       calendarApiState = {
-        ...state,
-        token: undefined,
+        currentUser: undefined,
+        currentCalendarId: undefined,
+        currentCalendarName: undefined,
         loadState: {
           ...state.loadState,
           ready: false,
@@ -146,43 +142,104 @@ export const calendarReducer = (
 };
 
 /**
- * Load the gapi client.
- * @param {Object} dispatch - React dispatcher to send result to
- * @param {CalendarApiState} state - State of calendar api
+ * Return handle for sign in state bound to given dispatch
+ * @param {CalendarApiState} state - state of calendar api
+ * @param {Object} dispatch - dispatch to send api events to
+ * @return {function}
  */
-export function gapiSetup(
-    dispatch: React.Dispatch<CalendarApiAction>,
+function getSignInHandler(
     state: CalendarApiState,
+    dispatch: React.Dispatch<CalendarApiAction>,
 ) {
-  if (state.loadState.ready) {
-    console.log('gapi client already loaded');
-    return;
-  }
+  console.log('Handling update in login state...');
 
-  console.log('Loading gapi client');
-  gapi.load('client', {
-    callback: () => {
-      console.log('Loaded gapi client');
-      if (state.loadState.auth && state.token != undefined) {
-        console.log('Found ready to go token, giving to client');
-        gapi.client.setToken({access_token: state.token});
-      }
+  // eslint-disable-next-line require-jsdoc
+  function _handleSignInState(isSignedIn: boolean) {
+    if (isSignedIn) {
+      const currentUser: string = gapi.auth2.getAuthInstance().currentUser
+          .get().getBasicProfile().getEmail();
+      console.log(`Got login from ${currentUser}`);
+      dispatch({
+        type: 'LOAD',
+        payload: {
+          ...nullCalendarApiActionPayload,
+          currentUser: currentUser,
+          loadState: {
+            ...state.loadState,
+            loaded: true,
+            auth: true,
+            ready: true,
+          },
+        },
+      });
+    } else {
+      console.log('No one is signed in');
+      clearCalendarApiState(state, dispatch);
       dispatch({
         type: 'LOAD',
         payload: {
           ...nullCalendarApiActionPayload,
           loadState: {
             ...state.loadState,
-            ready: state.loadState.auth,
+            loaded: true,
+            auth: false,
+            ready: false,
+          },
+        },
+      });
+    }
+  }
+  return _handleSignInState;
+}
+
+/**
+ * Load the gapi client and auth module.
+ * @param {Object} dispatch - React dispatcher to send result to
+ * @param {CalendarApiState} state - State of calendar api
+ */
+export function gapiLoad(
+    dispatch: React.Dispatch<CalendarApiAction>,
+    state: CalendarApiState,
+) {
+  if (state.loadState.ready) {
+    console.log('gapi already loaded');
+    return;
+  }
+
+  console.log('Loading gapi');
+  gapi.load('client', {
+    callback: () => {
+      console.log('Loaded gapi');
+      dispatch({
+        type: 'LOAD',
+        payload: {
+          ...nullCalendarApiActionPayload,
+          loadState: {
+            ...state.loadState,
+            auth: false,
+            ready: false,
             timeout: false,
             errored: false,
             loaded: true,
           },
         },
       });
+      console.log('Doing init');
+      gapi.client.init({
+        clientId: CLIENT_ID,
+        scope: SCOPES,
+      }).then(function() {
+        console.log('Init successful');
+        getSignInHandler(state, dispatch)(
+            gapi.auth2.getAuthInstance().isSignedIn.get(),
+        );
+      }).catch(function(error) {
+        console.log('Got error during gapi init:');
+        console.log(error);
+      });
     },
     onerror: () => {
-      console.log('Error occurred while loading gapi client');
+      console.log('Error occurred while loading gapi');
       dispatch({
         type: 'LOAD',
         payload: {
@@ -199,7 +256,7 @@ export function gapiSetup(
     },
     timeout: LOAD_TIMEOUT,
     ontimeout: () => {
-      console.log('Timeout occurred while loading gapi client');
+      console.log('Timeout occurred while loading gapi');
       dispatch({
         type: 'LOAD',
         payload: {
@@ -218,45 +275,6 @@ export function gapiSetup(
 };
 
 /**
- * Set the token for the gapi client
- * @param {Object} dispatch - Dispatch to send results to
- * @param {CalendarApiState} state - State of Calendar API
- * @param {string} token - token to give to gapi
- */
-export function setgapiToken(
-    dispatch: React.Dispatch<CalendarApiAction>,
-    state: CalendarApiState,
-    token: string,
-) {
-  if (!state.loadState.loaded) {
-    console.warn(
-        'Got request for setting gapi token, but gapi is not loaded.',
-    );
-    console.warn(
-        'Saving token for later',
-    );
-    return;
-  } else {
-    console.warn(
-        'gapi client is loaded, setting token',
-    );
-    gapi.client.setToken({access_token: token});
-  }
-  dispatch({
-    type: 'TOKEN',
-    payload: {
-      ...nullCalendarApiActionPayload,
-      loadState: {
-        ...state.loadState,
-        auth: true,
-        ready: state.loadState.loaded,
-      },
-      token: token,
-    },
-  });
-}
-
-/**
  * Clear out current CalendarApiState for logout
  * Keeps information about gapi load
  * @param {CalendarApiState} state - current state of calendar api
@@ -271,6 +289,36 @@ export function clearCalendarApiState(
     payload: nullCalendarApiActionPayload,
   });
 }
+
+/**
+ * Use the gapi library to login a user
+ * @param {CalendarApiState} state - state of calendar api
+ * @param {Object} dispatch - dispatch to send results to
+ */
+export function doLogin(
+    state: CalendarApiState, dispatch: React.Dispatch<CalendarApiAction>,
+) {
+  gapi.auth2.getAuthInstance().isSignedIn.listen(
+      getSignInHandler(state, dispatch),
+  );
+  gapi.auth2.getAuthInstance().signIn();
+}
+
+
+/**
+ * Use the gapi library to logout the user
+ * @param {CalendarApiState} state
+ * @param {Object} dispatch
+ */
+export function doLogout(
+    state: CalendarApiState, dispatch: React.Dispatch<CalendarApiAction>,
+) {
+  gapi.auth2.getAuthInstance().isSignedIn.listen(
+      getSignInHandler(state, dispatch),
+  );
+  gapi.auth2.getAuthInstance().signOut();
+}
+
 
 /**
  * Get a list of the names and ids of the user's calendar

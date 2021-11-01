@@ -14,9 +14,6 @@ import listViewPlugin from '@fullcalendar/list';
 import dayGridPlugin from '@fullcalendar/daygrid';
 import timeGridWeek from '@fullcalendar/timegrid';
 import {
-  AuthContext,
-} from '../services/login';
-import {
   CalendarApiAction,
   CalendarApiContext,
   CalendarApiState,
@@ -27,6 +24,7 @@ import './Calendar.css';
 
 const CalendarPage: React.FC = () => {
   const [calendarName, setCalendarName] = React.useState<string | null>(null);
+
   /**
    * Use calendarName state to display calendar names
    * @param {CalendarApiState} calendarApiState - state of calendar api to
@@ -125,28 +123,24 @@ const CalendarPage: React.FC = () => {
   return (
     <IonPage>
       <PageHeader />
-      <IonContent fullscreen>
-        <div>
-          <CalendarApiContext.Consumer>
-            {(calValue) =>
-              <AuthContext.Consumer>
-                {(authValue) => <>
-                  {authValue.state.isAuthenticated ?
-                    <>
-                      <IonText>
-                        <h1>Logged in as {authValue.state.user}</h1>
-                      </IonText>
-                      {showCalendarNames(
-                          calValue.state, calValue.state, calValue.dispatch)}
-                      {showCalendar(calValue.state)}
-                    </> :
-                    <h1>Not logged in</h1>
-                  }
-                </> }
-              </AuthContext.Consumer>
+      <IonContent fullscreen class="ion-padding">
+        <CalendarApiContext.Consumer>
+          {(calValue) => (<>
+            {
+              (
+                calValue.state.loadState.ready &&
+                calValue.state.loadState.auth
+              ) ?
+              <IonText>
+                <h1>Logged in as {calValue.state.currentUser}</h1>
+              </IonText> :
+              <h1>Not logged in</h1>
             }
-          </CalendarApiContext.Consumer>
-        </div>
+            {showCalendarNames(
+                calValue.state, calValue.state, calValue.dispatch)}
+            {showCalendar(calValue.state)}
+          </>)}
+        </CalendarApiContext.Consumer>
       </IonContent>
     </IonPage>
   );

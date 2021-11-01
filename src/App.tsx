@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {Redirect, Route} from 'react-router-dom';
 import {
   IonApp,
@@ -11,13 +11,6 @@ import {
 } from '@ionic/react';
 import {IonReactRouter} from '@ionic/react-router';
 import {help, calendar, trendingUp} from 'ionicons/icons';
-
-import {
-  AuthContext,
-  loginReducer,
-  initialLoginState,
-  loadLogin,
-} from './services/login';
 
 import {
   CalendarApiContext,
@@ -50,66 +43,50 @@ import './theme/variables.css';
 import GapiContainer from './components/GapiContainer';
 
 const App: React.FC = () => {
-  const [initState, setInitState] = React.useState(false);
-  const [loginState, loginDispatch] = React.useReducer(
-      loginReducer,
-      initialLoginState,
-  );
   const [calendarApiState, calendarDispatch] = React.useReducer(
       calendarReducer,
       initialCalendarApiState,
   );
 
-  useEffect(() => {
-    if (!initState) {
-      loadLogin(loginDispatch);
-      setInitState(true);
-    }
-  });
-
   return (
     <IonApp>
-      <AuthContext.Provider
-        value={{state: loginState, dispatch: loginDispatch}}
+      <CalendarApiContext.Provider
+        value={{state: calendarApiState, dispatch: calendarDispatch}}
       >
-        <CalendarApiContext.Provider
-          value={{state: calendarApiState, dispatch: calendarDispatch}}
-        >
-          <GapiContainer />
-          <IonReactRouter>
-            <IonTabs>
-              <IonRouterOutlet>
-                <Route exact path="/calendar">
-                  <CalendarPage />
-                </Route>
-                <Route exact path="/insights">
-                  <Insights />
-                </Route>
-                <Route exact path="/about">
-                  <AboutPage />
-                </Route>
-                <Route exact path="/">
-                  <Redirect to="/calendar" />
-                </Route>
-              </IonRouterOutlet>
-              <IonTabBar slot="bottom">
-                <IonTabButton tab="calendar" href="/calendar">
-                  <IonIcon icon={calendar} />
-                  <IonLabel>Calendar</IonLabel>
-                </IonTabButton>
-                <IonTabButton tab="insights" href="/insights">
-                  <IonIcon icon={trendingUp} />
-                  <IonLabel>Insights</IonLabel>
-                </IonTabButton>
-                <IonTabButton tab="about" href="/about">
-                  <IonIcon icon={help} />
-                  <IonLabel>About</IonLabel>
-                </IonTabButton>
-              </IonTabBar>
-            </IonTabs>
-          </IonReactRouter>
-        </CalendarApiContext.Provider>
-      </AuthContext.Provider>
+        <GapiContainer />
+        <IonReactRouter>
+          <IonTabs>
+            <IonRouterOutlet>
+              <Route exact path="/calendar">
+                <CalendarPage />
+              </Route>
+              <Route exact path="/insights">
+                <Insights />
+              </Route>
+              <Route exact path="/about">
+                <AboutPage />
+              </Route>
+              <Route exact path="/">
+                <Redirect to="/calendar" />
+              </Route>
+            </IonRouterOutlet>
+            <IonTabBar slot="bottom">
+              <IonTabButton tab="calendar" href="/calendar">
+                <IonIcon icon={calendar} />
+                <IonLabel>Calendar</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="insights" href="/insights">
+                <IonIcon icon={trendingUp} />
+                <IonLabel>Insights</IonLabel>
+              </IonTabButton>
+              <IonTabButton tab="about" href="/about">
+                <IonIcon icon={help} />
+                <IonLabel>About</IonLabel>
+              </IonTabButton>
+            </IonTabBar>
+          </IonTabs>
+        </IonReactRouter>
+      </CalendarApiContext.Provider>
     </IonApp>
   );
 };

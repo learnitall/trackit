@@ -2,13 +2,10 @@ import React, {useContext, useEffect, useState} from 'react';
 import scriptjs from 'scriptjs';
 import {
   CalendarApiContext,
-  gapiSetup,
-  setgapiToken,
+  gapiLoad,
   getCalendarList,
-  clearCalendarApiState,
   getCalendarEvents,
 } from '../services/calendarapi';
-import {AuthContext} from '../services/login';
 
 const GapiContainer: React.FC<{}> = () => {
   const [gapiScriptLoad, setgapiScriptLoad] = useState(false);
@@ -16,13 +13,12 @@ const GapiContainer: React.FC<{}> = () => {
     state: calendarState,
     dispatch: calendarDispatch,
   } = useContext(CalendarApiContext);
-  const {state: authState} = useContext(AuthContext);
 
   useEffect(() => {
     scriptjs(
         'https://apis.google.com/js/api.js', () => {
           if (!gapiScriptLoad) {
-            gapiSetup(
+            gapiLoad(
                 calendarDispatch,
                 calendarState,
             );
@@ -33,10 +29,7 @@ const GapiContainer: React.FC<{}> = () => {
   }, []);
 
   useEffect(() => {
-    if (
-      authState.isAuthenticated &&
-      calendarState.loadState.ready
-    ) {
+    if (calendarState.loadState.ready) {
       if (!calendarState.cache.pulledNames) {
         getCalendarList(
             calendarDispatch,
@@ -54,27 +47,7 @@ const GapiContainer: React.FC<{}> = () => {
         );
       }
     }
-
-    if (
-      authState.isAuthenticated &&
-      authState.credential != null &&
-      authState.credential.accessToken != undefined &&
-      calendarState.token != authState.credential.accessToken
-    ) {
-      setgapiToken(
-          calendarDispatch,
-          calendarState,
-          authState.credential.accessToken,
-      );
-    }
-
-    if (
-      !authState.isAuthenticated &&
-      calendarState.token != undefined
-    ) {
-      clearCalendarApiState(calendarState, calendarDispatch);
-    }
-  }, [calendarState, authState]);
+  }, [calendarState]);
 
   return (null);
 };
