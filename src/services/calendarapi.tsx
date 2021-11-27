@@ -1,4 +1,5 @@
 import React, {createContext} from 'react';
+import {DateTime} from 'luxon';
 // Helpful docs:
 // https://github.com/google/google-api-javascript-client
 // https://github.com/google/google-api-javascript-client/blob/master/docs/reference.md
@@ -27,6 +28,8 @@ export interface CalendarEvent {
   end: string,
   start: string,
   title: string,
+  durationSeconds: number,
+  durationHours: number,
   allDay: boolean,
 };
 interface CalendarApiCache {
@@ -396,6 +399,20 @@ export async function setCurrentCalendar(
 }
 
 /**
+ * Return the number of seconds between a given start and end dateTime
+ * https://stackoverflow.com/questions/34868498/how-to-get-total-hours-hhmm-format-using-moment-js/58950439#58950439
+ * @param {string} startTime
+ * @param {string} endTime
+ * @return {number}
+ */
+function getEventLength(startTime: string, endTime: string): number {
+  const startMoment = DateTime.fromISO(startTime);
+  const endMoment = DateTime.fromISO(endTime);
+
+  return endMoment.diff(startMoment, 'seconds').seconds;
+}
+
+/**
  * Get list of events for the given calendar, storing in local cache
  * @param {string} calendarId - ID of google calendar to pull events from
  * @param {Object} dispatch - Dispatch to send results to
@@ -418,6 +435,7 @@ export async function getCalendarEvents(
     method: 'GET',
     params: {
       'singleEvents': true,
+      'timeMax': DateTime.now().toISO(),
     },
   }).then(
       (response) => {
@@ -445,6 +463,9 @@ export async function getCalendarEvents(
               let allDay: boolean = false;
               let end: string = item.end.dateTime;
               let start: string = item.start.dateTime;
+              const duration: number = getEventLength(
+                  item.start.dateTime, item.end.dateTime,
+              );
               if (
                 item.end.dateTime == undefined ||
                 item.end.dateTime == undefined
@@ -457,6 +478,8 @@ export async function getCalendarEvents(
                 title: item.summary,
                 end: end,
                 start: start,
+                durationSeconds: duration,
+                durationHours: duration / 3600,
                 allDay: allDay,
               });
             },
