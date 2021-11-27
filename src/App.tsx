@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {Redirect, Route} from 'react-router-dom';
 import {
   IonApp,
@@ -13,11 +13,10 @@ import {IonReactRouter} from '@ionic/react-router';
 import {help, calendar, trendingUp} from 'ionicons/icons';
 
 import {
-  AuthContext,
-  loginReducer,
-  initialLoginState,
-  loadLogin,
-} from './services/login';
+  CalendarApiContext,
+  calendarReducer,
+  initialCalendarApiState,
+} from './services/calendarapi';
 
 import CalendarPage from './pages/Calendar';
 import Insights from './pages/Insights';
@@ -41,26 +40,20 @@ import '@ionic/react/css/display.css';
 
 /* Theme variables */
 import './theme/variables.css';
-
-let _initialized: boolean = false;
+import GapiContainer from './components/GapiContainer';
 
 const App: React.FC = () => {
-  const [loginState, loginDispatch] = React.useReducer(
-      loginReducer,
-      initialLoginState,
+  const [calendarApiState, calendarDispatch] = React.useReducer(
+      calendarReducer,
+      initialCalendarApiState,
   );
-  useEffect(() => {
-    if (!_initialized) {
-      loadLogin(loginDispatch);
-      _initialized = true;
-    }
-  });
 
   return (
     <IonApp>
-      <AuthContext.Provider
-        value={{state: loginState, dispatch: loginDispatch}}
+      <CalendarApiContext.Provider
+        value={{state: calendarApiState, dispatch: calendarDispatch}}
       >
+        <GapiContainer />
         <IonReactRouter>
           <IonTabs>
             <IonRouterOutlet>
@@ -93,7 +86,7 @@ const App: React.FC = () => {
             </IonTabBar>
           </IonTabs>
         </IonReactRouter>
-      </AuthContext.Provider>
+      </CalendarApiContext.Provider>
     </IonApp>
   );
 };

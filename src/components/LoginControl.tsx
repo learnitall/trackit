@@ -1,11 +1,11 @@
-import React, {useContext} from 'react';
+import React from 'react';
 import {IonButtons, IonButton, IonIcon, IonText} from '@ionic/react';
 import {logoGoogle} from 'ionicons/icons';
 import {
-  AuthContext,
+  CalendarApiContext,
   doLogin,
   doLogout,
-} from '../services/login';
+} from '../services/calendarapi';
 
 /**
  * Create the login button
@@ -55,13 +55,13 @@ function LogoutButton(props: { onClick: any }) {
  * @return {Object} LogoutButton or LoginButton depending on login status
  */
 const LoginControl: React.FC<{}> = () => {
-  const {dispatch} = useContext(AuthContext);
+  const {state, dispatch} = React.useContext(CalendarApiContext);
   /**
    * Called when user clicks on the LoginButton
    * Triggers a Login event
    */
   function handleLoginClick() {
-    doLogin(dispatch);
+    doLogin(state, dispatch);
   }
 
   /**
@@ -69,17 +69,17 @@ const LoginControl: React.FC<{}> = () => {
    * Triggers a Logout event
    */
   function handleLogoutClick() {
-    doLogout(dispatch);
+    doLogout(state, dispatch);
   }
 
   return (
-    <AuthContext.Consumer>
+    <CalendarApiContext.Consumer>
       {(value) => (
-        !value.state.isAuthenticated ?
+        !value.state.loadState.auth ?
         <LoginButton onClick={handleLoginClick}/> :
         <LogoutButton onClick={handleLogoutClick}/>
       )}
-    </AuthContext.Consumer>
+    </CalendarApiContext.Consumer>
   );
 };
 

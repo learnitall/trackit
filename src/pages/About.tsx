@@ -60,12 +60,14 @@ const AboutPage: React.FC<{}> = () => {
               user&apos;s device for the sole purposes of convenience, allowing
               the user to not have to login every time they visit Track It.
               None of the data pulled from the users&apos;s Google account is
-              sent off of the user&apos;s device, and API access can be removed
-              from Track It by logging out, which removes any stored
-              credentials on the user&apos;s device. Track It is served
-              statically from Google&apos;s Firebase Hosting service, with
-              analytics features disabled. The website is open source and the
-              code can be found at <a
+              sent off of the user&apos;s device, and only stored for caching
+              purposes. Track It&apos;s API access to a user&apos;s account, and
+              any cached data that Track It has stored on the user&apos;s
+              device, can be removed by logging out. Logging out removes any
+              stored credentials and data on the user&apos;s device. Track It
+              is served statically from Google&apos;s Firebase Hosting service,
+              with analytics features disabled. The website is open source and
+              the code can be found at <a
                 href="https://github.com/learnitall/trackit"
               >https://github.com/learnitall/trackit</a>.
               I, Ryan Drew, have no access to personally-identifiable
@@ -83,10 +85,11 @@ const AboutPage: React.FC<{}> = () => {
               is to be used for analyzing calendar event data within the
               browser and displaying an embedded Google calendar
               containing user data. The user also agrees to allow Track It
-              to store API credentials on their device and understands that
-              this website is not responsible, nor liable, for unauthorized
-              access to their Google account through the use of the stored
-              API credentials should they be found by a malicious actor.
+              to store API credentials and cached data received from Google APIs
+              on their device, and understands that this website is not
+              responsible, nor liable, for unauthorized access to their Google
+              account and/or data through the use of said stored data, should it
+              be found by a malicious actor.
               <br/><br/>
               Track It will try its best to display accurate and helpful
               information regarding a user&apos;s calendar event data, however
