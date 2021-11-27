@@ -131,14 +131,16 @@ const CalendarPage: React.FC = () => {
                 calValue.state.loadState.ready &&
                 calValue.state.loadState.auth
               ) ?
-              <IonText>
-                <h1>Logged in as {calValue.state.currentUser}</h1>
-              </IonText> :
+              <>
+                <IonText>
+                  <h1>Logged in as {calValue.state.currentUser}</h1>
+                </IonText>
+                {showCalendarNames(
+                    calValue.state, calValue.state, calValue.dispatch)}
+                {showCalendar(calValue.state)}
+              </> :
               <h1>Not logged in</h1>
             }
-            {showCalendarNames(
-                calValue.state, calValue.state, calValue.dispatch)}
-            {showCalendar(calValue.state)}
           </>)}
         </CalendarApiContext.Consumer>
       </IonContent>
