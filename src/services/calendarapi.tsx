@@ -416,6 +416,9 @@ export async function getCalendarEvents(
   gapi.client.request({
     path: `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`,
     method: 'GET',
+    params: {
+      'singleEvents': true,
+    },
   }).then(
       (response) => {
         console.log('Got response from gapi');
